@@ -41,7 +41,10 @@ export interface WiredOptions<Props extends WiredProps, ServerSideProps = {}> {
     ctx: NextPageContext | NextRouter
   ) => Props['preloadedQuery']['variables'];
   /** Called when creating a Relay environment on the client. Should be idempotent. */
-  createClientEnvironment: () => Environment;
+  createClientEnvironment: (
+    ctx: NextPageContext,
+    props: ServerSideProps
+  ) => Environment;
   /** Props passed to the component when rendering on the client. */
   clientSideProps?: (
     ctx: NextPageContext
@@ -172,7 +175,7 @@ async function getServerInitialProps<Props extends WiredProps, ServerSideProps>(
 
   const env = await opts.createServerEnvironment(ctx, serverSideProps);
   const variables = variablesFromContext(ctx);
-  const preloadedQuery = loadQuery(env, query, variables);
+  const preloadedQuery = loadQuery(env as any, query, variables);
 
   await ensureQueryFlushed(preloadedQuery);
 
@@ -203,9 +206,9 @@ function getClientInitialProps<Props extends WiredProps, ClientSideProps>(
     return {};
   }
 
-  const env = opts.createClientEnvironment();
+  const env = opts.createClientEnvironment(ctx, clientSideProps as any);
   const variables = variablesFromContext(ctx);
-  const preloadedQuery = loadQuery(env, query, variables, {
+  const preloadedQuery = loadQuery(env as any, query, variables, {
     fetchPolicy: 'store-and-network',
   });
 
